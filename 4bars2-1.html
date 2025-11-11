@@ -23,9 +23,7 @@
           </tr>
         </thead>
       </table>
-      <br>
       <button id="btn" onclick="changeText();">เริ่มสุ่ม</button>
-      <br>
   </body>
   <script>
     //change text in the button
@@ -59,7 +57,7 @@
     //function for randon emojis in array
     function getRandomEmoji() {
       // const emoji = ['🍊','🍌','🐻','😺','🙈','-']
-      const emoji = ['🐘','🐶','🐟','😺','-','-']
+      const emoji = ['🐦‍⬛','🐶','🐖','🐔','-','-']
       //6 = จำนวนที่อยู่ในอาเรย์
       const index1 = Math.floor(Math.random() * 6);
       document.getElementById("bar1").innerHTML = emoji[index1];

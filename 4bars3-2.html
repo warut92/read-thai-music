@@ -12,7 +12,7 @@
     <center>
       <h3>ฝึกอ่านโน้ตดนตรีไทย แบบที่ 2</h3>
       <h>ให้นักเรียนอ่าน 2 แบบฝึก</h>
-      <h2>-x-x</h2>
+      <h2>-x-x, ---x</h2>
       <table style="width:300px;table-layout:fixed">
         <thead style="text-align:center">
           <tr>
@@ -23,6 +23,7 @@
             </td>
           </tr>
         </thead>
+      </table>
       </table>
       <button id="btn" onclick="changeText();">เริ่มสุ่ม</button>
   </body>
@@ -53,7 +54,7 @@
       }
 
     function getRandomEmoji() {
-      const emoji = ['🐶','🐱','🐘','🍊','🍌','🌶️','🦑']
+      const emoji = ['🐶','🐱','🐘','🍊','🍌','🌶️','-','-','-','-']
       // const emoji = ['🐶','🐱','🐻','🐷','🍌','🦑','-','-','-','-']
       const index1 = Math.floor(Math.random() * 7);
       document.getElementById("bar1").innerHTML = emoji[index1];

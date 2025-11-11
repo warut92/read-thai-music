@@ -46,10 +46,12 @@ document.body.appendChild(linkBox);
 // -------- LINKS DATA --------
 const links = [
   { text: "หน้าหลัก", url: "./index.html" },
-  { text: "แบบที่ 1", url: "./4bars1-1.html" },
-  { text: "แบบที่ 2", url: "./4bars2-1.html" },
-  { text: "แบบที่ 3", url: "./4bars3-1.html" },
-  { text: "แบบที่ 4", url: "./4bars4-1.html" },
+  { text: "แบบที่ 1 /---x/", url: "./4bars1-1.html" },
+  { text: "แบบที่ 2 /---x/----/", url: "./4bars2-1.html" },
+  { text: "แบบที่ 3 /-xxx/", url: "./4bars4-1.html" },
+  { text: "แบบที่ 4 /-xox/", url: "./4bars4-1.html" },
+  { text: "แบบที่ 5 /-x-x/", url: "./4bars3-1.html" },
+  { text: "แบบที่ 6 /-x-x/---x/----/", url: "./4bars2-2.html" },
   { text: "แบบปรับแต่งเอง", url: "./4bars4-custom.html" }
 
 ];
