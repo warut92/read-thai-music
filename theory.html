@@ -8,46 +8,309 @@
 </head>
 <body>
     <h1>โน้ตดนตรีไทย</h1>
-    <h3>ตัวโน้ตดนตรีไทย ระบบ ดรมฟ</h4>
-      <table style="width:50%">
+    <h3>ตัวโน้ตดนตรีไทย ระบบ ดรมฟ</h3>
+      <details class="academic-box"><summary>คำอธิบาย</summary><p class="academic">การบันทึกโน้ตดนตรีไทยแบบตัวอักษรใช้พยัญชนะไทยแทนระดับเสียงทั้ง 7 เสียง โดยนำพยัญชนะต้นของชื่อเสียงตามระบบโซลเฟจ (โด เร มี ฟา ซอล ลา ที) มาเป็นสัญลักษณ์ ได้แก่ ด ร ม ฟ ซ ล ท ระบบนี้อ่านง่าย และเหมาะกับการถ่ายทอดเพลงไทยซึ่งแต่เดิมสืบทอดแบบมุขปาฐะ (การต่อเพลงด้วยการจดจำ) ในทางทฤษฎี ระบบเสียงดนตรีไทยแบ่งหนึ่งช่วงทบเสียง (octave) ออกเป็น 7 เสียงที่มีระยะห่างใกล้เคียงกัน ต่างจากบันไดเสียงเมเจอร์ของดนตรีตะวันตกที่มีทั้งระยะเต็มเสียงและครึ่งเสียง เสียงที่ได้ยินในตารางนี้ใช้ความถี่ตามระบบเสียงของกรมศิลปากร โดยเสียงโด (เครื่องสาย/มโหรี)มีความถี่ 460.6 เฮิรตซ์</p></details>
+      <h4>กดที่แถวเพื่อฟังเสียง</h4>
+      <table style="width:50%" id="note-table">
         <tr><td>โน้ตไทย</td><td>ความหมาย</td></tr>
-        <tr><td>ด</td><td>เสียงโด</td></tr>
-        <tr><td>ร</td><td>สียงเร</td></tr>
-        <tr><td>ม</td><td>สียงมี</td></tr>
-        <tr><td>ฟ</td><td>เสียงฟา</td></tr>
-        <tr><td>ซ</td><td>เสียงซอล</td></tr>
-        <tr><td>ล</td><td>เสียงลา</td></tr>
-        <tr><td>ท</td><td>เสียงที</td></tr>
+        <tr class="play-note" data-freq="460.6"><td>ด</td><td>เสียงโด</td></tr>
+        <tr class="play-note" data-freq="508.4"><td>ร</td><td>เสียงเร</td></tr>
+        <tr class="play-note" data-freq="561.4"><td>ม</td><td>เสียงมี</td></tr>
+        <tr class="play-note" data-freq="619.8"><td>ฟ</td><td>เสียงฟา</td></tr>
+        <tr class="play-note" data-freq="684.4"><td>ซ</td><td>เสียงซอล</td></tr>
+        <tr class="play-note" data-freq="755.6"><td>ล</td><td>เสียงลา</td></tr>
+        <tr class="play-note" data-freq="834.4"><td>ท</td><td>เสียงที</td></tr>
         </table>
-    <h3>สัญลักษณ์ต่าง ๆ</h4>
+      <style>
+        .play-note { cursor: pointer; user-select: none; }
+        .academic { max-width: 800px; line-height: 1.7; text-indent: 2em; margin: 4px 10px 8px; }
+        .bar-room { cursor: default; }
+        .bar-room:hover { color: transparent; }
+        .bar-room:hover::after { content: attr(data-n); position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #d32f2f; font-size: 40px; white-space: nowrap; }
+        .play-note.playing td, td.play-note.playing { background-color: #ffd54f; }
+        .academic-box { max-width: 800px; margin: 4px 10px 8px; }
+        .academic-box summary { cursor: pointer; color: #1565c0; }
+        .academic-box .academic { margin: 4px 0 0; }
+        .octave-table td { text-align: center; padding: 4px 8px; }
+        .octave-table td.play-note { font-size: 28px; line-height: 1.6; min-width: 1.6em; }
+        .duration-table td { padding: 4px 10px; }
+        .duration-table tr.play-note td:first-child { font-size: 28px; letter-spacing: 2px; white-space: nowrap; }
+      </style>
+      <script>
+        (function () {
+          var ctx;
+          var SUB_BEAT = 0.5; // ความยาว 1 จังหวะย่อย (วินาที)
+          // dur = ความยาวเสียงเป็นวินาที (ไม่ระบุ = เสียงสั้นแล้วค่อย ๆ จางไป)
+          function play(freq, dur) {
+            ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+            if (ctx.state === 'suspended') ctx.resume();
+            var t = ctx.currentTime;
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.4, t + 0.01);
+            var end;
+            if (dur) {
+              // ลากเสียงค้างไว้ตลอดความยาว แล้วค่อยปล่อยเสียงตอนท้าย
+              gain.gain.linearRampToValueAtTime(0.3, t + 0.15);
+              gain.gain.setValueAtTime(0.3, t + dur - 0.08);
+              gain.gain.linearRampToValueAtTime(0.0001, t + dur);
+              end = t + dur;
+            } else {
+              gain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+              end = t + 1.2;
+            }
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(t);
+            osc.stop(end + 0.05);
+          }
+          document.addEventListener('click', function (e) {
+            var el = e.target.closest('.play-note');
+            if (!el) return;
+            var beats = parseInt(el.dataset.beats, 10);
+            var dur = beats ? beats * SUB_BEAT : 0;
+            play(parseFloat(el.dataset.freq), dur);
+            el.classList.add('playing');
+            clearTimeout(el._playTimer);
+            el._playTimer = setTimeout(function () { el.classList.remove('playing'); }, dur ? dur * 1000 : 300);
+          });
+        })();
+      </script>
+    <h3>สัญลักษณ์ต่าง ๆ</h3>
+      <details class="academic-box"><summary>คำอธิบาย</summary><p class="academic">นอกจากตัวอักษรแทนระดับเสียงแล้ว โน้ตไทยยังใช้เครื่องหมายกำกับเพื่อบอกช่วงเสียงและความยาวของเสียง เครื่องหมายจุดเหนือตัวอักษร (◌ํ) แสดงว่าเสียงนั้นสูงขึ้นหนึ่งช่วงทบเสียง เครื่องหมายพินทุใต้ตัวอักษร (◌ฺ) แสดงว่าเสียงนั้นต่ำลงหนึ่งช่วงทบเสียง ส่วนเครื่องหมายขีด (-) ใช้แทนจังหวะย่อยที่ไม่มีการเปล่งเสียงใหม่ ผู้บรรเลงจะลากเสียงเดิมต่อหรือเว้นว่างตามลักษณะของเครื่องดนตรี เครื่องหมายเหล่านี้ช่วยให้บันทึกทำนองได้ครบถ้วนโดยใช้ตัวอักษรไทยเพียงชุดเดียว</p></details>
       <table style="width:50%">
         <tr><td>สัญลักษณ์</td><td>ความหมาย</td></tr>
         <tr><td>-ํ</td><td>เสียงสูง</td></tr>
         <tr><td>-ฺ</td><td>เสียงต่ำ</td></tr>
         <tr><td>-</td><td>ความยาวโน้ต 1 จังหวะย่อย</td></tr>
         </table>
-    <h3>ห้องโน้ตดนตรี</h4>
+      <h4>ตารางเสียงสูง เสียงกลาง เสียงต่ำ (กดที่ตัวโน้ตเพื่อฟังเสียง)</h4>
+      <table class="octave-table">
+        <tr><td>ระดับเสียง</td><td>ด</td><td>ร</td><td>ม</td><td>ฟ</td><td>ซ</td><td>ล</td><td>ท</td></tr>
+        <tr><td>เสียงสูง</td>
+          <td class="play-note" data-freq="921.2">ดํ</td>
+          <td class="play-note" data-freq="1016.8">รํ</td>
+          <td class="play-note" data-freq="1122.8">มํ</td>
+          <td class="play-note" data-freq="1239.6">ฟํ</td>
+          <td class="play-note" data-freq="1368.8">ซํ</td>
+          <td class="play-note" data-freq="1511.2">ลํ</td>
+          <td class="play-note" data-freq="1668.8">ทํ</td></tr>
+        <tr><td>เสียงกลาง</td>
+          <td class="play-note" data-freq="460.6">ด</td>
+          <td class="play-note" data-freq="508.4">ร</td>
+          <td class="play-note" data-freq="561.4">ม</td>
+          <td class="play-note" data-freq="619.8">ฟ</td>
+          <td class="play-note" data-freq="684.4">ซ</td>
+          <td class="play-note" data-freq="755.6">ล</td>
+          <td class="play-note" data-freq="834.4">ท</td></tr>
+        <tr><td>เสียงต่ำ</td>
+          <td class="play-note" data-freq="230.3">ดฺ</td>
+          <td class="play-note" data-freq="254.2">รฺ</td>
+          <td class="play-note" data-freq="280.7">มฺ</td>
+          <td class="play-note" data-freq="309.9">ฟฺ</td>
+          <td class="play-note" data-freq="342.2">ซฺ</td>
+          <td class="play-note" data-freq="377.8">ลฺ</td>
+          <td class="play-note" data-freq="417.2">ทฺ</td></tr>
+        </table>
+      <h4>ตัวอย่างการทำให้โน้ตมีเสียงยาว (กดที่แถวเพื่อฟังเสียง)</h4>
+      <table class="duration-table">
+        <tr><td>โน้ต</td><td>ความยาวเสียง</td></tr>
+        <tr class="play-note" data-freq="460.6" data-beats="1"><td>ด</td><td>1 จังหวะย่อย</td></tr>
+        <tr class="play-note" data-freq="460.6" data-beats="2"><td>ด-</td><td>2 จังหวะย่อย</td></tr>
+        <tr class="play-note" data-freq="460.6" data-beats="3"><td>ด--</td><td>3 จังหวะย่อย</td></tr>
+        <tr class="play-note" data-freq="460.6" data-beats="4"><td>ด---</td><td>4 จังหวะย่อย</td></tr>
+        </table>
+    <h3>ห้องโน้ตดนตรี</h3>
+      <details class="academic-box"><summary>คำอธิบาย</summary><p class="academic">โน้ตดนตรีไทยจัดเป็นห้อง ห้องละ 4 จังหวะย่อย แต่ละช่องอาจเป็นตัวโน้ตหรือเครื่องหมายขีดก็ได้ ลักษณะสำคัญที่ต่างจากดนตรีตะวันตกคือ จังหวะหนัก (จังหวะตก) ของดนตรีไทยอยู่ที่ตัวโน้ตตัวสุดท้ายของห้อง คือตำแหน่งที่ 4 ซึ่งแสดงด้วยสีแดงในตารางด้านล่าง ไม่ได้อยู่ที่จังหวะแรกของห้อง ทำนองเพลงไทยจึงมักเคลื่อนไปสู่เสียงสำคัญที่ปลายห้อง โดยทั่วไปหนึ่งบรรทัดมี 8 ห้อง ซึ่งช่วยให้มองเห็นโครงสร้างวรรคและประโยคเพลงได้ชัดเจน</p></details>
       <h4>โดยทั่วไป 1 บรรทัด มี 8 ห้อง: 1 ห้องมี 4 ตัวโน้ต</h4>
       <table style="width:50px">
-        <tr><td style="font-size: 40px;text-align: center;">----</td>
-          <td style="font-size: 40px;text-align: center;">----</td>
-          <td style="font-size: 40px;text-align: center;">----</td>
-          <td style="font-size: 40px;text-align: center;">----</td>
-          <td style="font-size: 40px;text-align: center;">----</td>
-          <td style="font-size: 40px;text-align: center;">----</td>
-          <td style="font-size: 40px;text-align: center;">----</td>
-          <td style="font-size: 40px;text-align: center;">----</td>
+        <tr><td class="bar-room" data-n="1" style="font-size: 40px;text-align: center;">----</td>
+          <td class="bar-room" data-n="2" style="font-size: 40px;text-align: center;">----</td>
+          <td class="bar-room" data-n="3" style="font-size: 40px;text-align: center;">----</td>
+          <td class="bar-room" data-n="4" style="font-size: 40px;text-align: center;">----</td>
+          <td class="bar-room" data-n="5" style="font-size: 40px;text-align: center;">----</td>
+          <td class="bar-room" data-n="6" style="font-size: 40px;text-align: center;">----</td>
+          <td class="bar-room" data-n="7" style="font-size: 40px;text-align: center;">----</td>
+          <td class="bar-room" data-n="8" style="font-size: 40px;text-align: center;">----</td>
         </tr>
       </table>
+      <script>
+        // เสียง white noise สั้น ๆ เมื่อเลื่อนเมาส์เข้าแต่ละห้อง
+        (function () {
+          var ctx, noiseBuf;
+          function getCtx() {
+            ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+            if (ctx.state === 'suspended') ctx.resume();
+            return ctx;
+          }
+          // เบราว์เซอร์ไม่อนุญาตให้เล่นเสียงจนกว่าผู้ใช้จะคลิก/แตะหน้าเว็บอย่างน้อย 1 ครั้ง
+          ['pointerdown', 'keydown'].forEach(function (ev) {
+            document.addEventListener(ev, getCtx, { once: true });
+          });
+          function noise() {
+            getCtx();
+            if (ctx.state !== 'running') return;
+            if (!noiseBuf) {
+              noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.2, ctx.sampleRate);
+              var d = noiseBuf.getChannelData(0);
+              for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+            }
+            var t = ctx.currentTime;
+            var g = ctx.createGain();
+            g.gain.setValueAtTime(0, t);
+            g.gain.linearRampToValueAtTime(0.25, t + 0.005);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+            var src = ctx.createBufferSource();
+            src.buffer = noiseBuf;
+            src.connect(g).connect(ctx.destination);
+            src.start(t);
+            src.stop(t + 0.2);
+          }
+          document.querySelectorAll('.bar-room').forEach(function (td) {
+            td.addEventListener('pointerenter', noise);
+          });
+        })();
+      </script>
       <h4>1 ห้องมี 4 ตัวโน้ต, 1 บรรทัด มี 8 ห้อง</h4>
-      <table style="width:45px">
+      <p>ทดลองตบมือ ให้ตรงกับโน้ตตำแหน่งที่ 4</p>
+
+      <table style="width:45px" id="beat-table">
         <tr>
           <td style="font-size: 40px;text-align: center;"><blue>1</blue><blue>2</blue><blue>3</blue><blue><red>4</red></blue></td>
           <td style="font-size: 40px;text-align: center;"><blue>1</blue><blue>2</blue><blue>3</blue><blue><red>4</red></blue></td>
           <td style="font-size: 40px;text-align: center;"><blue>1</blue><blue>2</blue><blue>3</blue><blue><red>4</red></blue></td>
           <td style="font-size: 40px;text-align: center;"><blue>1</blue><blue>2</blue><blue>3</blue><blue><red>4</red></blue></td>
-        </tr>
+          <!-- <td style="font-size: 40px;text-align: center;"><blue>1</blue><blue>2</blue><blue>3</blue><blue><red>4</red></blue></td>
+          <td style="font-size: 40px;text-align: center;"><blue>1</blue><blue>2</blue><blue>3</blue><blue><red>4</red></blue></td>
+          <td style="font-size: 40px;text-align: center;"><blue>1</blue><blue>2</blue><blue>3</blue><blue><red>4</red></blue></td>
+          <td style="font-size: 40px;text-align: center;"><blue>1</blue><blue>2</blue><blue>3</blue><blue><red>4</red></blue></td>
+        </tr> -->
       </table>
+      <div class="beat-controls">
+        <button type="button" id="beat-start">▶ เริ่มเล่น</button>
+        <button type="button" id="beat-stop" disabled>■ หยุดเล่น</button>
+        <label>ความเร็ว
+          <input type="range" id="beat-tempo" min="40" max="200" step="1" value="80">
+          <span id="beat-tempo-val">80</span> ครั้ง/นาที
+        </label>
+      </div>
+      <style>
+        .beat-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 6px 10px; }
+        .beat-controls button:disabled { opacity: 0.5; cursor: default; }
+        .beat-controls input[type=range] { vertical-align: middle; width: 140px; }
+        #beat-table td { white-space: nowrap; }
+        #beat-table blue { display: inline-block; padding: 0 2px; border-radius: 6px; transition: background-color 0.08s; }
+        #beat-table blue.beat-on { background-color: #ffd54f; color: #1565c0; }
+        #beat-table blue.beat-on.beat-strong { background-color: #ef9a9a; }
+      </style>
+      <script>
+        (function () {
+          var beats = Array.prototype.slice.call(document.querySelectorAll('#beat-table blue'));
+          var startBtn = document.getElementById('beat-start');
+          var stopBtn = document.getElementById('beat-stop');
+          var tempo = document.getElementById('beat-tempo');
+          var tempoVal = document.getElementById('beat-tempo-val');
+          var ctx, timer, endTimer, nextTime, index, noiseBuf;
+
+          beats.forEach(function (b, i) { if (i % 4 === 3) b.classList.add('beat-strong'); });
+
+          function getCtx() {
+            ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+            if (ctx.state === 'suspended') ctx.resume();
+            return ctx;
+          }
+
+          // เสียงติ๊ก (จังหวะ 1 2 3)
+          function tick(t) {
+            var osc = ctx.createOscillator();
+            var g = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = 1800;
+            g.gain.setValueAtTime(0.25, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+            osc.connect(g).connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.05);
+          }
+
+          // เสียงตบมือ (จังหวะที่ 4 จังหวะตก)
+          function clap(t) {
+            if (!noiseBuf) {
+              noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+              var d = noiseBuf.getChannelData(0);
+              for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+            }
+            var filter = ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1200;
+            filter.Q.value = 0.8;
+            var g = ctx.createGain();
+            // ตบมือจริงมีเสียงกระทบสั้น ๆ หลายครั้งติดกัน
+            g.gain.setValueAtTime(0, t);
+            [0, 0.01, 0.02].forEach(function (o) {
+              g.gain.setValueAtTime(0.9, t + o);
+              g.gain.exponentialRampToValueAtTime(0.1, t + o + 0.009);
+            });
+            g.gain.setValueAtTime(0.7, t + 0.03);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+            var src = ctx.createBufferSource();
+            src.buffer = noiseBuf;
+            src.connect(filter).connect(g).connect(ctx.destination);
+            src.start(t);
+            src.stop(t + 0.25);
+          }
+
+          function highlight(i, t) {
+            var delay = Math.max(0, (t - ctx.currentTime) * 1000);
+            setTimeout(function () {
+              if (!timer) return;
+              beats.forEach(function (b) { b.classList.remove('beat-on'); });
+              beats[i].classList.add('beat-on');
+            }, delay);
+          }
+
+          function scheduler() {
+            while (index < beats.length && nextTime < ctx.currentTime + 0.1) {
+              if (index % 4 === 3) clap(nextTime); else tick(nextTime);
+              highlight(index, nextTime);
+              nextTime += 60 / tempo.value;
+              index++;
+            }
+            // เล่นครบหนึ่งรอบแล้ว: หยุดเองเมื่อจังหวะสุดท้ายจบ
+            if (index >= beats.length && !endTimer) {
+              clearInterval(timer);
+              endTimer = setTimeout(stop, Math.max(0, (nextTime - ctx.currentTime) * 1000));
+            }
+          }
+
+          startBtn.addEventListener('click', function () {
+            if (timer) return;
+            getCtx();
+            index = 0;
+            nextTime = ctx.currentTime + 0.05;
+            timer = setInterval(scheduler, 25);
+            scheduler();
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+          });
+
+          function stop() {
+            clearInterval(timer);
+            clearTimeout(endTimer);
+            timer = null;
+            endTimer = null;
+            beats.forEach(function (b) { b.classList.remove('beat-on'); });
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+          }
+
+          stopBtn.addEventListener('click', stop);
+
+          tempo.addEventListener('input', function () { tempoVal.textContent = tempo.value; });
+        })();
+      </script>
 
       <a href="index.html">กลับหน้าแรก</a>
 

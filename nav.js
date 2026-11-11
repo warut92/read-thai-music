@@ -20,6 +20,15 @@ style.textContent = `
     background: none;
     border: none;
   }
+  #soundBtn {
+    position: absolute;
+    top: 10px;
+    right: 60px;
+    font-size: 24px;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
   #linkBox a {
     display: block;
     margin: 5px 0;
@@ -38,6 +47,18 @@ toggleBtn.id = "toggleBtn";
 toggleBtn.textContent = "🍎";
 document.body.appendChild(toggleBtn);
 
+// -------- SOUND BUTTON (เฉพาะหน้าที่มีเสียง เช่น 4bars.html) --------
+const pageSound = window["Sound"];
+if (pageSound) {
+  const soundBtn = document.createElement("button");
+  soundBtn.id = "soundBtn";
+  soundBtn.title = "เปิด/ปิดเสียง";
+  const renderSoundBtn = () => { soundBtn.textContent = pageSound.muted ? "🔇" : "🔊"; };
+  soundBtn.addEventListener("click", () => { pageSound.toggle(); renderSoundBtn(); });
+  renderSoundBtn();
+  document.body.appendChild(soundBtn);
+}
+
 // -------- LINK BOX DIV --------
 const linkBox = document.createElement("div");
 linkBox.id = "linkBox";
@@ -46,13 +67,14 @@ document.body.appendChild(linkBox);
 // -------- LINKS DATA --------
 const links = [
   { text: "หน้าหลัก", url: "./index.html" },
-  { text: "แบบที่ 1 /---x/", url: "./4bars1-1.html" },
-  { text: "แบบที่ 2 /---x/----/", url: "./4bars2-1.html" },
-  { text: "แบบที่ 3 /-xxx/", url: "./4bars4-1.html" },
-  { text: "แบบที่ 4 /-xox/", url: "./4bars4-1.html" },
-  { text: "แบบที่ 5 /-x-x/", url: "./4bars3-1.html" },
-  { text: "แบบที่ 6 /-x-x/---x/----/", url: "./4bars2-2.html" },
-  { text: "แบบปรับแต่งเอง", url: "./4bars4-custom.html" }
+  { text: "แบบที่ 1 /---x/", url: "./4bars.html?p=p1" },
+  { text: "แบบที่ 2 /---x/----/", url: "./4bars.html?p=p2" },
+  { text: "แบบที่ 3 /-x-x/", url: "./4bars.html?p=p3" },
+  { text: "แบบที่ 4 /-xxx/", url: "./4bars.html?p=p4" },
+  { text: "แบบที่ 5 /-x-x/---x/", url: "./4bars.html?p=p5" },
+  { text: "แบบที่ 6 /---x/----/-x-x/", url: "./4bars.html?p=p6" },
+  { text: "สุ่มแบบปรับแต่งเอง", url: "./4bars.html" },
+  { text: "แต่งโน้ตเอง", url: "./4bars-custom.html" }
 
 ];
 

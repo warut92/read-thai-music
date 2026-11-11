@@ -3,7 +3,30 @@
 
 body, h4 {
   font-family: 'K2D', sans-serif;
-  zoom: 400%;
+}
+
+/* ขยายทั้งหน้าตามความกว้างจอ (ใส่ที่ body เท่านั้น ไม่งั้นจะขยายซ้อนกัน) */
+body {
+  zoom: 1.1;
+  margin: 8px 16px;
+}
+
+@media (min-width: 600px) {
+  body { zoom: 1.6; }
+  #forkongithub { zoom: 0.625; }
+}
+
+@media (min-width: 1000px) {
+  body { zoom: 2; }
+  #forkongithub { zoom: 0.5; }
+}
+
+h4 {
+  margin: 0.6em 0 0.3em;
+}
+
+h1 {
+  margin: 0.3em 0;
 }
 
 h3 {
@@ -34,7 +57,7 @@ table, td, tr {
 button {
   background-color: #e7e7e7;
   color: black;
-  border: 2px solid #f44336
+  border: 2px solid #f44336;
   padding: 10px 10px;
   text-align: center;
   text-decoration: none;
@@ -54,4 +77,9 @@ red {
 
 blue:hover {
   color: violet;
+}
+
+/* เลข 4 (จังหวะตก) เมื่อ hover ให้เป็นสีน้ำเงิน */
+blue > red:hover {
+  color: blue;
 }

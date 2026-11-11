@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ฝึกอ่านโน้ตดนตรีไทย แบบสุ่ม 4 ช่อง</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    .wrap { max-width: 420px; margin: 0 auto; text-align: center; }
+    #board { width: 100%; table-layout: fixed; margin: 10px auto; }
+    #board td { font-size: 20px; text-align: center; padding: 6px 2px; white-space: nowrap; height: 1.6em; }
+    select, input { font-family: 'K2D', sans-serif; font-size: 14px; padding: 3px 4px; }
+    #patternLabel { font-size: 22px; }
+    #go { font-size: 18px; padding: 6px 22px; }
+    details { text-align: left; border: 1px solid #ccc; border-radius: 6px; padding: 6px 10px; margin-top: 14px; }
+    summary { cursor: pointer; font-weight: bold; }
+    .row { margin: 10px 0; }
+    .row label { font-weight: bold; }
+    .hint { font-size: 12px; color: #555; margin: 2px 0; }
+    .palette button { font-size: 18px; min-width: 2.2em; padding: 2px 4px; opacity: 0.35; border: 2px solid transparent; background: #f2f2f2; }
+    .palette button.on { opacity: 1; border-color: #f44336; background: #fff6d6; }
+    .actions button { font-size: 14px; padding: 4px 10px; }
+    #msg { min-height: 1.2em; font-size: 13px; color: #c11; }
+    #shareBox { width: 100%; box-sizing: border-box; font-size: 12px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h3>ฝึกอ่านโน้ตดนตรีไทย แบบสุ่ม 4 ช่อง</h3>
+
+    <div class="row">
+      <select id="patternSelect" aria-label="เลือกแบบฝึก"></select>
+    </div>
+
+    <h2 id="patternLabel"></h2>
+    <table id="board"></table>
+    <button id="go">เริ่มสุ่ม</button>
+    <p class="hint">กดปุ่ม หรือกด Space เพื่อสุ่ม</p>
+    <p id="msg"></p>
+
+    <details id="settings">
+      <summary>ปรับแต่ง / สร้างแบบใหม่</summary>
+
+      <div class="row">
+        <label for="tplInput">รูปแบบในแต่ละห้อง</label><br>
+        <input id="tplInput" type="text" style="width:100%;box-sizing:border-box" spellcheck="false">
+        <p class="hint">
+          <b>-</b> = ตัวพัก, <b>x</b> = สุ่มอีโมจี,
+          ตัวอักษรอื่น เช่น <b>a</b> = อีโมจีตัวเดียวกันในห้องนั้น (เช่น <b>-aaa</b>)<br>
+          ใส่หลายแบบคั่นด้วยจุลภาค เช่น <b>---x, ----, -x-x</b> แต่ละห้องจะสุ่มเลือกหนึ่งแบบ
+        </p>
+      </div>
+
+      <div class="row">
+        <label for="rowsSelect">จำนวนแถว</label>
+        <select id="rowsSelect">
+          <option value="1">1 แถว (4 ห้อง)</option>
+          <option value="2">2 แถว (8 ห้อง)</option>
+          <option value="3">3 แถว (12 ห้อง)</option>
+          <option value="4">4 แถว (16 ห้อง)</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label>เลือกอีโมจี</label> <span class="hint">(กดเพื่อเปิด/ปิด)</span>
+        <div id="palette" class="palette"></div>
+        <input id="emojiInput" type="text" placeholder="เพิ่มอีโมจีเอง เช่น 🐯🦊" style="width:60%">
+        <button id="addEmoji" type="button">เพิ่ม</button>
+      </div>
+
+      <hr>
+      <div class="row actions">
+        <label for="nameInput">บันทึกเป็นแบบใหม่</label><br>
+        <input id="nameInput" type="text" placeholder="ชื่อแบบฝึก" style="width:55%">
+        <button id="saveBtn" type="button">บันทึก</button>
+        <button id="deleteBtn" type="button">ลบแบบนี้</button>
+        <p class="hint">แบบที่บันทึกจะเก็บไว้ในเครื่องนี้เท่านั้น ใช้ปุ่มด้านล่างเพื่อส่งลิงก์ให้คนอื่น</p>
+      </div>
+      <div class="row actions">
+        <button id="shareBtn" type="button">คัดลอกลิงก์แบบฝึกนี้</button>
+        <input id="shareBox" type="text" readonly hidden>
+      </div>
+    </details>
+
+    <p><a href="./index.html">กลับหน้าแรก</a></p>
+  </div>
+
+  <script>
+    // ---------- ข้อมูลแบบฝึกมาตรฐาน (มาจากหน้า 4bars*-*.html เดิม) ----------
+    const PRESETS = [
+      { id: 'p1', name: 'แบบที่ 1 (---x)', templates: ['---x'], emojis: ['🐘', '🐻', '🐟', '🙈', '😺'], rows: 1 },
+      { id: 'p2', name: 'แบบที่ 2 (---x, ----)', templates: ['---x', '----'], emojis: ['🐦‍⬛', '🐶', '🐖', '🐔'], rows: 1 },
+      { id: 'p3', name: 'แบบที่ 3 (-x-x)', templates: ['-x-x'], emojis: ['🐶', '🐱', '🐘', '🍊', '🍌', '🌶️', '🦑'], rows: 1 },
+      { id: 'p4', name: 'แบบที่ 4 (-xxx)', templates: ['-aaa'], emojis: ['🐷', '🐶', '🐦‍⬛', '🐔', '🍌', '🐻'], rows: 1 },
+      { id: 'p5', name: 'แบบที่ 5 (-x-x, ---x)', templates: ['-x-x', '---x'], emojis: ['🐶', '🐱', '🐘', '🍊', '🍌', '🌶️'], rows: 1 },
+      { id: 'p6', name: 'แบบที่ 6 (---x, ----, -x-x)', templates: ['---x', '----', '-x-x'], emojis: ['🍊', '🍌', '🐻', '🐶', '🐱', '🐍'], rows: 1 }
+    ];
+
+    const BASE_PALETTE = ['🍊', '🍌', '🐻', '😺', '🙈', '🐘', '🐟', '🐦‍⬛', '🐶', '🐖', '🐔', '🐍', '🐱',
+      '🌶️', '🦑', '🐷', '🐹', '🐸', '🦆', '🐴', '🐓', '🐼', '-'];
+
+    const STORE_KEY = 'thaiNote4barsCustom';
+    const $ = id => document.getElementById(id);
+
+    // ---------- เครื่องมือ ----------
+    const segmenter = window.Intl && Intl.Segmenter ? new Intl.Segmenter('th', { granularity: 'grapheme' }) : null;
+    function graphemes(str) {
+      const list = segmenter ? Array.from(segmenter.segment(str), s => s.segment) : Array.from(str);
+      return list.filter(g => g.trim() !== '' && g !== ',');
+    }
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    const uniq = arr => arr.filter((v, i) => arr.indexOf(v) === i);
+
+    function parseTemplates(text) {
+      const parts = text.toLowerCase().split(/[,\s]+/).filter(Boolean);
+      if (!parts.length) return { error: 'กรุณาใส่รูปแบบอย่างน้อย 1 แบบ เช่น ---x' };
+      const bad = parts.find(p => !/^[-a-z]{1,8}$/.test(p));
+      if (bad) return { error: `รูปแบบ "${bad}" ไม่ถูกต้อง ใช้ได้เฉพาะ - และตัวอักษร a-z ไม่เกิน 8 ตัว` };
+      return { templates: parts };
+    }
+
+    const displayTemplate = t => t.replace(/[a-z]/g, 'x');
+
+    function loadCustom() {
+      try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch (e) { return []; }
+    }
+    function saveCustom(list) {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); return true; } catch (e) { return false; }
+    }
+
+    // ---------- สถานะ ----------
+    let custom = loadCustom();
+    let state = null;      // { id, name, templates, emojis, rows }
+    let palette = BASE_PALETTE.slice();
+    let timer = null, stopTimer = null;
+
+    function allPatterns() { return PRESETS.concat(custom); }
+
+    function setMsg(text) { $('msg').textContent = text || ''; }
+
+    // ---------- แสดงผล ----------
+    function renderSelect() {
+      const sel = $('patternSelect');
+      sel.innerHTML = '';
+      const g1 = document.createElement('optgroup');
+      g1.label = 'แบบมาตรฐาน';
+      PRESETS.forEach(p => g1.appendChild(new Option(p.name, p.id)));
+      sel.appendChild(g1);
+      if (custom.length) {
+        const g2 = document.createElement('optgroup');
+        g2.label = 'แบบที่สร้างเอง';
+        custom.forEach(p => g2.appendChild(new Option(p.name, p.id)));
+        sel.appendChild(g2);
+      }
+      if (state && state.id === null) sel.appendChild(new Option('(แบบที่กำลังแก้ไข)', ''));
+      sel.value = state && state.id ? state.id : '';
+    }
+
+    function renderBoard(fill) {
+      const board = $('board');
+      board.innerHTML = '';
+      for (let r = 0; r < state.rows; r++) {
+        const tr = board.insertRow();
+        for (let c = 0; c < 4; c++) {
+          tr.insertCell().textContent = fill ? fill() : '-'.repeat(state.templates[0].length);
+        }
+      }
+    }
+
+    function renderLabel() {
+      $('patternLabel').textContent = state.templates.map(displayTemplate).join(', ');
+    }
+
+    function renderPalette() {
+      const box = $('palette');
+      box.innerHTML = '';
+      palette.forEach(e => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = e;
+        b.title = e === '-' ? 'ตัวพัก (สุ่มให้มีช่องว่าง)' : e;
+        if (state.emojis.includes(e)) b.className = 'on';
+        b.addEventListener('click', () => {
+          state.emojis = state.emojis.includes(e) ? state.emojis.filter(x => x !== e) : state.emojis.concat(e);
+          markEdited();
+          renderPalette();
+        });
+        box.appendChild(b);
+      });
+    }
+
+    function renderSettings() {
+      $('tplInput').value = state.templates.join(', ');
+      $('rowsSelect').value = String(state.rows);
+      $('nameInput').value = state.id && state.id.startsWith('c') ? state.name : '';
+      $('deleteBtn').disabled = !(state.id && state.id.startsWith('c'));
+      $('shareBox').hidden = true;
+      renderPalette();
+    }
+
+    function renderAll() {
+      renderSelect();
+      renderLabel();
+      renderBoard();
+      renderSettings();
+      checkReady();
+    }
+
+    function checkReady() {
+      const needsEmoji = state.templates.some(t => /[a-z]/.test(t));
+      const ok = !needsEmoji || state.emojis.length > 0;
+      $('go').disabled = !ok;
+      setMsg(ok ? '' : 'กรุณาเลือกอีโมจีอย่างน้อย 1 ตัว');
+      return ok;
+    }
+
+    // ---------- เปลี่ยนแบบ ----------
+    function usePattern(p) {
+      stopSpin();
+      state = { id: p.id || null, name: p.name || '', templates: p.templates.slice(), emojis: p.emojis.slice(), rows: p.rows || 1 };
+      palette = uniq(BASE_PALETTE.concat(state.emojis));
+      renderAll();
+    }
+
+    // แก้ไขจากแบบมาตรฐาน → กลายเป็นแบบที่กำลังแก้ไข (ไม่เขียนทับแบบมาตรฐาน)
+    function markEdited() {
+      if (state.id && state.id.startsWith('p')) {
+        state.id = null;
+        renderSelect();
+        $('deleteBtn').disabled = true;
+      }
+      checkReady();
+    }
+
+    // ---------- เสียงแนว chiptune (Web Audio) ----------
+    const Sound = (() => {
+      let ctx = null, master = null;
+      let muted = false;
+      try { muted = localStorage.getItem('thaiNote4barsMuted') === '1'; } catch (e) {}
+
+      // สเกลเพนทาโทนิก (ใกล้เคียงทางเสียงดนตรีไทย) ด ร ม ซ ล สองช่วงเสียง
+      const SCALE = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.5, 1174.66, 1318.51, 1567.98, 1760.0];
+
+      function ensure() {
+        if (!ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return null;
+          ctx = new AC();
+          master = ctx.createGain();
+          master.gain.value = 0.18;
+          master.connect(ctx.destination);
+        }
+        if (ctx.state === 'suspended') ctx.resume();
+        return ctx;
+      }
+
+      function tone(freq, start, dur, type = 'square', vol = 1, slideTo = null) {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, start);
+        if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, start + dur);
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(vol, start + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+        o.connect(g).connect(master);
+        o.start(start);
+        o.stop(start + dur + 0.02);
+      }
+
+      return {
+        get muted() { return muted; },
+        toggle() {
+          muted = !muted;
+          try { localStorage.setItem('thaiNote4barsMuted', muted ? '1' : '0'); } catch (e) {}
+          return muted;
+        },
+        // เสียงเริ่ม: ไล่เสียงขึ้นแบบเกมเก่า
+        start() {
+          if (muted || !ensure()) return;
+          const t = ctx.currentTime;
+          tone(220, t, 0.12, 'square', 0.8, 880);
+        },
+        // เสียงติ๊กทุกครั้งที่สุ่ม
+        tick() {
+          if (muted || !ensure()) return;
+          const t = ctx.currentTime;
+          tone(pick(SCALE), t, 0.05, 'square', 0.5);
+        },
+        // เสียงจบ: อาร์เพจจิโอสั้น ๆ + เบสสามเหลี่ยม
+        finish() {
+          if (muted || !ensure()) return;
+          const t = ctx.currentTime + 0.02;
+          [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, t + i * 0.07, 0.09, 'square', 0.7));
+          tone(1046.5, t + 0.28, 0.35, 'square', 0.6);
+          tone(1567.98, t + 0.28, 0.35, 'square', 0.35);
+          tone(130.81, t, 0.6, 'triangle', 1);
+        }
+      };
+    })();
+
+    // ปุ่มเปิด/ปิดเสียงอยู่ใน nav.js (แสดงเฉพาะหน้าที่มี window.Sound)
+    window.Sound = Sound;
+
+    // ---------- สุ่ม ----------
+    function makeBar() {
+      const t = pick(state.templates);
+      const same = {};
+      let out = '';
+      for (const ch of t) {
+        if (ch === '-') out += '-';
+        else if (ch === 'x') out += pick(state.emojis);
+        else out += (same[ch] = same[ch] || pick(state.emojis));
+      }
+      return out;
+    }
+
+    function shuffleOnce() {
+      $('board').querySelectorAll('td').forEach(td => { td.textContent = makeBar(); });
+    }
+
+    function spinStep() {
+      shuffleOnce();
+      Sound.tick();
+    }
+
+    function startSpin() {
+      if (!checkReady()) return;
+      $('go').textContent = 'หยุด';
+      if (state.rows !== $('board').rows.length) renderBoard();
+      Sound.start();
+      shuffleOnce();
+      timer = setInterval(spinStep, 60);
+      stopTimer = setTimeout(stopSpin, 1000);
+    }
+
+    function stopSpin() {
+      if (timer) Sound.finish();
+      clearInterval(timer);
+      clearTimeout(stopTimer);
+      timer = stopTimer = null;
+      $('go').textContent = 'เริ่มสุ่ม';
+    }
+
+    $('go').addEventListener('click', () => (timer ? stopSpin() : startSpin()));
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space' && !/INPUT|SELECT|BUTTON|TEXTAREA/.test(document.activeElement.tagName)) {
+        e.preventDefault();
+        timer ? stopSpin() : startSpin();
+      }
+    });
+
+    // ---------- การตั้งค่า ----------
+    $('patternSelect').addEventListener('change', e => {
+      const p = allPatterns().find(x => x.id === e.target.value);
+      if (p) usePattern(p);
+    });
+
+    $('tplInput').addEventListener('input', e => {
+      const res = parseTemplates(e.target.value);
+      if (res.error) { setMsg(res.error); $('go').disabled = true; return; }
+      state.templates = res.templates;
+      markEdited();
+      renderLabel();
+      if (!timer) renderBoard();
+    });
+
+    $('rowsSelect').addEventListener('change', e => {
+      state.rows = Number(e.target.value);
+      markEdited();
+      if (!timer) renderBoard();
+    });
+
+    function addEmojiFromInput() {
+      const list = graphemes($('emojiInput').value);
+      if (!list.length) return;
+      palette = uniq(palette.concat(list));
+      state.emojis = uniq(state.emojis.concat(list));
+      $('emojiInput').value = '';
+      markEdited();
+      renderPalette();
+    }
+    $('addEmoji').addEventListener('click', addEmojiFromInput);
+    $('emojiInput').addEventListener('keydown', e => { if (e.key === 'Enter') addEmojiFromInput(); });
+
+    $('saveBtn').addEventListener('click', () => {
+      const name = $('nameInput').value.trim();
+      if (!name) { setMsg('กรุณาตั้งชื่อแบบฝึกก่อนบันทึก'); $('nameInput').focus(); return; }
+      if (!checkReady()) return;
+      const existing = custom.find(p => p.name === name);
+      const item = { id: existing ? existing.id : 'c' + Date.now(), name, templates: state.templates.slice(), emojis: state.emojis.slice(), rows: state.rows };
+      custom = existing ? custom.map(p => (p.id === item.id ? item : p)) : custom.concat(item);
+      if (!saveCustom(custom)) { setMsg('บันทึกไม่ได้ (เบราว์เซอร์ไม่อนุญาตให้เก็บข้อมูล) ลองใช้ปุ่มคัดลอกลิงก์แทน'); return; }
+      usePattern(item);
+      setMsg('');
+      $('msg').textContent = existing ? `บันทึกทับ "${name}" แล้ว` : `บันทึก "${name}" แล้ว`;
+      $('msg').style.color = 'green';
+      setTimeout(() => { $('msg').style.color = ''; }, 2000);
+    });
+
+    // ลบต้องกดสองครั้งเพื่อยืนยัน
+    let deleteArmed = false;
+    $('deleteBtn').addEventListener('click', () => {
+      if (!state.id || !state.id.startsWith('c')) return;
+      if (!deleteArmed) {
+        deleteArmed = true;
+        $('deleteBtn').textContent = 'กดอีกครั้งเพื่อยืนยันการลบ';
+        setTimeout(() => { deleteArmed = false; $('deleteBtn').textContent = 'ลบแบบนี้'; }, 3000);
+        return;
+      }
+      deleteArmed = false;
+      $('deleteBtn').textContent = 'ลบแบบนี้';
+      custom = custom.filter(p => p.id !== state.id);
+      saveCustom(custom);
+      usePattern(PRESETS[0]);
+    });
+
+    $('shareBtn').addEventListener('click', () => {
+      const params = new URLSearchParams({ t: state.templates.join(','), e: state.emojis.join(''), r: state.rows });
+      if (state.name && state.id && state.id.startsWith('c')) params.set('n', state.name);
+      const url = location.origin + location.pathname + '?' + params.toString();
+      const box = $('shareBox');
+      box.value = url;
+      box.hidden = false;
+      box.select();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => { $('shareBtn').textContent = 'คัดลอกแล้ว ✓'; },
+          () => { $('shareBtn').textContent = 'คัดลอกลิงก์ด้านล่างได้เลย'; });
+        setTimeout(() => { $('shareBtn').textContent = 'คัดลอกลิงก์แบบฝึกนี้'; }, 2500);
+      }
+    });
+
+    // ---------- เริ่มต้น: อ่านจากลิงก์ (?p=p3 หรือ ?t=...&e=...&r=...) ----------
+    (function init() {
+      const q = new URLSearchParams(location.search);
+      const byId = q.get('p') && allPatterns().find(x => x.id === q.get('p'));
+      if (byId) return usePattern(byId);
+      if (q.get('t')) {
+        const res = parseTemplates(q.get('t'));
+        if (!res.error) {
+          usePattern({
+            id: null,
+            name: q.get('n') || '',
+            templates: res.templates,
+            emojis: graphemes(q.get('e') || ''),
+            rows: Math.min(4, Math.max(1, Number(q.get('r')) || 1))
+          });
+          $('settings').open = true;
+          return;
+        }
+      }
+      usePattern(PRESETS[0]);
+    })();
+  </script>
+  <script src="nav.js"></script>
+</body>
+</html>
