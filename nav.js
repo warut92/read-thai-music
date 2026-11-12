@@ -74,7 +74,8 @@ const links = [
   { text: "แบบที่ 5 /-x-x/---x/", url: "./4bars.html?p=p5" },
   { text: "แบบที่ 6 /---x/----/-x-x/", url: "./4bars.html?p=p6" },
   { text: "สุ่มแบบปรับแต่งเอง", url: "./4bars.html" },
-  { text: "แต่งโน้ตเอง", url: "./4bars-custom.html" }
+  { text: "แต่งโน้ตเอง", url: "./4bars-custom.html" },
+  { text: "เพลงเต้ยโขง", url: "./toey-khong.html" }
 
 ];
 

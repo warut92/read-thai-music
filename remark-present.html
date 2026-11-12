@@ -18,8 +18,9 @@ body {
 	zoom: 1; /* สไลด์ปรับขนาดเอง ไม่ใช้ zoom จาก style.css */
 }
 
+/* ตัวอักษรธรรมดาใช้ขนาดปกติของสไลด์ (remark ตั้งไว้ 20px) */
 p, li {
-	font-size: 40px;
+	font-size: 1em;
 }
 
 
@@ -116,12 +117,24 @@ class: center, middle
 
 # โน้ตดนตรีไทย
 ---
-
-## **โน้ตดนตรีไทย** ถือเป็นสิ่งประดิษฐ์สำหรับการบันทึกเสียงและวิธีการเล่นดนตรี ซึ่งเดิมทีเราไม่มีการบันทึก อาจจะมีบ้างบางสำนักดนตรีที่ใช้โน้ตสากล แต่ที่แพร่หลายนั้นเกิดมาจากร้านขายเครื่องดนตรีไทยที่ชื่อว่า "ดุริยบรรณ" มีการพิมพ์โน้ตออกมาจำหน่าย
----
 class: center, middle
 
-![600](./img//duriyaban-notation.jpg)
+![600](https://wegothailand.com/wp-content/uploads/2021/09/2.1%E0%B8%A0%E0%B8%B2%E0%B8%9E%E0%B9%80%E0%B8%99%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%AB%E0%B8%B2%E0%B8%AA%E0%B9%84%E0%B8%A5%E0%B8%94%E0%B9%8C2-29-1024x604.jpg)
+
+การต่อเพลง
+---
+class: middle
+## **โน้ตดนตรีไทย** 
+ถือเป็นสิ่งประดิษฐ์สำหรับการบันทึกเสียงและวิธีการเล่นดนตรี ซึ่งเดิมทีเราไม่มีการบันทึก อาจจะมีบ้างบางสำนักดนตรีที่ใช้โน้ตสากล 
+
+![600](./img/eveing_prelude.jpg)
+---
+class: center, middle
+# ระบบโน้ตดนตรีไทย
+
+1. ระบบของหลวงประดิษฐ์
+2. ระบบเลขาสังคีต
+3. ระบบ ดรมฟ
 
 ---
 class: center, middle
@@ -134,16 +147,32 @@ class: center, middle
 
 ![800](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROpm4H9hwGwstkjzSGTJIAUmP6HNzcX_1yaQ&s)
 
---
 
 หลวงประดิษฐไพเราะ (ศร ศิลปบรรเลง)
 ---
-
 class: center, middle
-ระบบที่นิยมในปัจจุบัน
-# ระบบ ดรมฟ
---
 
+แต่ที่แพร่หลายนั้นเกิดมาจากร้านขายเครื่องดนตรีไทยที่ชื่อว่า "ดุริยบรรณ" มีการพิมพ์โน้ตออกมาจำหน่าย
+
+![400](./img/duriyaban_notation_cover.jpg)
+---
+class: center, middle
+
+โน้ต "เลขาสังคีตย์" ดุริยบรรณ
+![600](./img/duriyaban_notation.jpg)
+
+---
+class: center, middle
+โน้ต "เลขาสังคีตย์" ดุริยบรรณ
+![600](./img/duriyaban_notation_sarathee.jpg)
+
+---
+class: center, middle
+# ระบบที่นิยมในปัจจุบัน
+## ระบบ ดรมฟ
+
+[ไปที่หน้า](./theory.html)
+---
 ---
 class: center, middle
 
@@ -223,6 +252,40 @@ class: center, middle
     <script src="https://warut92.github.io/thmjs/thm.js"></script>
     <script>
       var slideshow = remark.create();
+    </script>
+    <style>
+      /* ที่มาของรูป: มุมล่างขวา เหนือเลขหน้าสไลด์ */
+      .img-source {
+        position: absolute;
+        right: 20px;
+        bottom: 36px;
+        max-width: 60%;
+        font-size: 14px;
+        text-align: right;
+        opacity: 0.75;
+      }
+      .img-source a { color: inherit; }
+    </style>
+    <script>
+      // ใส่ "ที่มา: ชื่อเว็บ" ให้รูปที่ดึงมาจากลิงก์ภายนอกโดยอัตโนมัติ
+      // ถ้าสไลด์ไหนเขียน "ที่มา:" ไว้เองแล้ว จะไม่ใส่ซ้ำ
+      (function () {
+        document.querySelectorAll('.remark-slide-content').forEach(function (slide) {
+          if (/ที่มา\s*:/.test(slide.textContent)) return;
+          var links = [];
+          slide.querySelectorAll('img').forEach(function (img) {
+            var src = img.getAttribute('src') || '';
+            if (!/^https?:\/\//i.test(src)) return;
+            var host = new URL(src).hostname.replace(/^www\./, '');
+            links.push('<a href="' + src.replace(/"/g, '&quot;') + '" target="_blank" rel="noopener">' + host + '</a>');
+          });
+          if (!links.length) return;
+          var box = document.createElement('div');
+          box.className = 'img-source';
+          box.innerHTML = 'ที่มา: ' + links.join(', ');
+          slide.appendChild(box);
+        });
+      })();
     </script>
   </body>
 </html>

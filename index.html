@@ -14,11 +14,23 @@
       <h3>โปรแกรมฝึกอ่านโน้ตดนตรีไทย</h3>
       <h4>ฝึกอ่านโน้ตดนตรีไทยด้วยอิโมจี</h4>
       <h4>โดย ครูวรุฒ ดนตรีไทย</h4>
-      <h1>🍊🍌🐻😺🙈</h1>
+      <h1 id="random-emoji">🍊🍌🐻😺🙈</h1>
+      <script>
+        // สุ่มอีโมจี 5 ตัว (ไม่ซ้ำกัน) ทุกครั้งที่เปิดหน้า
+        (function () {
+          var pool = ['🍊', '🍌', '🐻', '😺', '🙈', '🐘', '🐟', '🐦‍⬛', '🐶', '🐖', '🐔', '🐍', '🐱',
+            '🌶️', '🦑', '🐷', '🐹', '🐸', '🦆', '🐴', '🐓', '🐼'];
+          for (var i = pool.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+          }
+          document.getElementById('random-emoji').textContent = pool.slice(0, 5).join('');
+        })();
+      </script>
       <br>
       <h4>ความรู้เบื้องต้นเกี่ยวกับโน้ตดนตรีไทย</h4>
       <a href="./theory.html">HTML</a>, 
-      <a href="./lesson.html">Silde</a>
+      <a href="./remark-present.html">Silde</a>
       <h4>แบบฝึกต่าง ๆ</h4>
       <a href="./4bars.html"><b>สุ่ม 4 ช่อง (เลือกแบบ / อีโมจี / สร้างแบบใหม่)</b></a>
       <br>
@@ -31,6 +43,9 @@
       <a href="./4bars.html?p=p4">4 ช่อง แบบที่ 4 (-xxx)</a>
       <br>
       <a href="./4bars-custom.html">แต่งโน้ตเอง</a>
+      <br>
+      <h4>ฝึกอ่านเพลง</h4>
+      <a href="./toey-khong.html">เพลงเต้ยโขง</a>
       <br>
       
       <br>

@@ -8,7 +8,13 @@
   <style>
     .wrap { max-width: 420px; margin: 0 auto; text-align: center; }
     #board { width: 100%; table-layout: fixed; margin: 10px auto; }
-    #board td { font-size: 20px; text-align: center; padding: 6px 2px; white-space: nowrap; height: 1.6em; }
+    #board td { font-size: 20px; text-align: center; padding: 6px 2px; white-space: nowrap; height: 1.6em; overflow: hidden; }
+    /* เอฟเฟกต์สลอต */
+    #board .reel { display: inline-block; }
+    #board .reel.spin { animation: reel 0.06s linear infinite; filter: blur(0.6px); }
+    #board .reel.landed { animation: land 0.3s ease-out; }
+    @keyframes reel { from { transform: translateY(-35%); } to { transform: translateY(35%); } }
+    @keyframes land { 0% { transform: translateY(-30%) scale(1.2); } 60% { transform: translateY(8%); } 100% { transform: none; } }
     select, input { font-family: 'K2D', sans-serif; font-size: 14px; padding: 3px 4px; }
     #patternLabel { font-size: 22px; }
     #go { font-size: 18px; padding: 6px 22px; }
@@ -19,6 +25,12 @@
     .hint { font-size: 12px; color: #555; margin: 2px 0; }
     .palette button { font-size: 18px; min-width: 2.2em; padding: 2px 4px; opacity: 0.35; border: 2px solid transparent; background: #f2f2f2; }
     .palette button.on { opacity: 1; border-color: #f44336; background: #fff6d6; }
+    details.cat { margin-top: 6px; padding: 4px 8px; }
+    details.cat summary { font-weight: normal; }
+    details.cat .palette { max-height: 220px; overflow-y: auto; }
+    details.cat .cat-tools { margin: 4px 0; }
+    button.small { font-size: 12px; padding: 2px 6px; margin: 0 2px; }
+    #pickedList { font-size: 16px; word-break: break-all; }
     .actions button { font-size: 14px; padding: 4px 10px; }
     #msg { min-height: 1.2em; font-size: 13px; color: #c11; }
     #shareBox { width: 100%; box-sizing: border-box; font-size: 12px; }
@@ -64,9 +76,23 @@
 
       <div class="row">
         <label>เลือกอีโมจี</label> <span class="hint">(กดเพื่อเปิด/ปิด)</span>
+        <p class="hint">เลือกแล้ว <b id="pickedCount">0</b> ตัว: <span id="pickedList"></span>
+          <button id="clearEmoji" type="button" class="small">ล้างที่เลือก</button></p>
         <div id="palette" class="palette"></div>
+        <div id="categories"></div>
         <input id="emojiInput" type="text" placeholder="เพิ่มอีโมจีเอง เช่น 🐯🦊" style="width:60%">
         <button id="addEmoji" type="button">เพิ่ม</button>
+      </div>
+
+      <div class="row actions">
+        <label for="setSelect">ชุดอีโมจีที่บันทึกไว้</label><br>
+        <select id="setSelect" style="width:50%"></select>
+        <button id="useSetBtn" type="button">ใช้ชุดนี้</button>
+        <button id="deleteSetBtn" type="button">ลบชุดนี้</button><br>
+        <input id="setNameInput" type="text" placeholder="ชื่อชุดอีโมจี เช่น สัตว์ป่า" style="width:50%">
+        <button id="saveSetBtn" type="button">บันทึกชุดอีโมจี</button>
+        <p class="hint">บันทึกอีโมจีที่เลือกอยู่เป็นชุด เก็บไว้ในเครื่องนี้ ใช้ได้กับทุกแบบฝึก</p>
+        <p id="setMsg" class="hint"></p>
       </div>
 
       <hr>
@@ -100,7 +126,28 @@
     const BASE_PALETTE = ['🍊', '🍌', '🐻', '😺', '🙈', '🐘', '🐟', '🐦‍⬛', '🐶', '🐖', '🐔', '🐍', '🐱',
       '🌶️', '🦑', '🐷', '🐹', '🐸', '🦆', '🐴', '🐓', '🐼', '-'];
 
+    // ---------- อีโมจีแยกหมวด ----------
+    // (เว้นอาวุธ บุหรี่ และโลงศพไว้ เพราะเป็นสื่อการสอนสำหรับเด็ก)
+    const EMOJI_CATEGORIES = [
+      { name: '🐶 สัตว์', list:
+        '🐵 🐒 🦍 🦧 🙈 🙉 🙊 🐶 🐕 🦮 🐩 🐺 🦊 🦝 🐱 🐈 😺 🦁 🐯 🐅 🐆 🐴 🐎 🦄 🦓 🦌 🦬 🐮 🐂 🐃 🐄 🐷 🐖 🐗 🐽 🐏 🐑 🐐 🐪 🐫 🦙 🦒 🐘 🦣 🦏 🦛 ' +
+        '🐭 🐁 🐀 🐹 🐰 🐇 🐿️ 🦫 🦔 🦇 🐻 🐨 🐼 🦥 🦦 🦨 🦘 🦡 🦃 🐔 🐓 🐣 🐤 🐥 🐦 🐦‍⬛ 🐧 🕊️ 🦅 🦆 🦢 🦉 🦤 🦩 🦚 🦜 ' +
+        '🐸 🐊 🐢 🦎 🐍 🐲 🐉 🦕 🦖 🐳 🐋 🐬 🦭 🐟 🐠 🐡 🦈 🐙 🐚 🦀 🦞 🦐 🦑 🦪 🐌 🦋 🐛 🐜 🐝 🪲 🐞 🦗 🪳 🕷️ 🦂 🦟 🪰 🪱' },
+      { name: '🍎 ผลไม้และผัก', list:
+        '🍇 🍈 🍉 🍊 🍋 🍌 🍍 🥭 🍎 🍏 🍐 🍑 🍒 🍓 🫐 🥝 🍅 🫒 🥥 🥑 🍆 🥔 🥕 🌽 🌶️ 🫑 🥒 🥬 🥦 🧄 🧅 🍄 🥜 🌰' },
+      { name: '🎒 สิ่งของ', list:
+        '👓 🕶️ 🥽 🥼 🦺 👔 👕 👖 🧣 🧤 🧥 🧦 👗 👘 🥻 🩱 🩳 👙 👚 👛 👜 👝 🛍️ 🎒 🩴 👞 👟 🥾 🥿 👠 👡 🩰 👢 👑 👒 🎩 🎓 🧢 ⛑️ 📿 💄 💍 💎 ' +
+        '🔔 🎷 🪗 🎸 🎹 🎺 🎻 🪕 🥁 🪘 🎤 🎧 📻 📱 ☎️ 📞 📟 📠 🔋 🔌 💻 🖥️ 🖨️ ⌨️ 🖱️ 💽 💾 💿 📀 🧮 ' +
+        '🎥 🎞️ 📽️ 🎬 📺 📷 📸 📹 📼 🔍 🔎 🕯️ 💡 🔦 🏮 🪔 📔 📕 📖 📗 📘 📙 📚 📓 📒 📃 📜 📄 📰 🗞️ 📑 🔖 🏷️ ' +
+        '💰 🪙 💴 💵 💶 💷 💸 💳 🧾 ✉️ 📧 📨 📩 📤 📥 📦 📫 📪 📬 📭 📮 🗳️ ✏️ ✒️ 🖋️ 🖊️ 🖌️ 🖍️ 📝 ' +
+        '💼 📁 📂 🗂️ 📅 📆 🗒️ 🗓️ 📇 📈 📉 📊 📋 📌 📍 📎 🖇️ 📏 📐 ✂️ 🗃️ 🗄️ 🗑️ 🔒 🔓 🔏 🔐 🔑 🗝️ ' +
+        '🔨 ⛏️ ⚒️ 🛠️ 🪚 🔧 🪛 🔩 ⚙️ 🗜️ ⚖️ 🦯 🔗 ⛓️ 🪝 🧰 🧲 🪜 ⚗️ 🧪 🧫 🧬 🔬 🔭 📡 💊 🩹 🩺 ' +
+        '🚪 🛗 🪞 🪟 🛏️ 🛋️ 🪑 🚽 🪠 🚿 🛁 🪤 🪒 🧴 🧷 🧹 🧺 🧻 🪣 🧼 🪥 🧽 🧯 🛒 🗿 🪧 ' +
+        '⚽ 🏀 🏈 ⚾ 🥎 🎾 🏐 🏉 🥏 🎱 🏓 🏸 🪀 🪁 🧸 🎈 🎁 🎀 🪅 🪆 🎲 🧩 ♟️ 🎮 🕹️ ⏰ ⌚ ⌛ 🧭 ☂️ 🌂 🧳' }
+    ].map(c => ({ name: c.name, list: c.list.split(' ').filter(Boolean) }));
+
     const STORE_KEY = 'thaiNote4barsCustom';
+    const SET_KEY = 'thaiNote4barsEmojiSets';
     const $ = id => document.getElementById(id);
 
     // ---------- เครื่องมือ ----------
@@ -133,7 +180,7 @@
     let custom = loadCustom();
     let state = null;      // { id, name, templates, emojis, rows }
     let palette = BASE_PALETTE.slice();
-    let timer = null, stopTimer = null;
+    let timer = null;
 
     function allPatterns() { return PRESETS.concat(custom); }
 
@@ -172,23 +219,137 @@
       $('patternLabel').textContent = state.templates.map(displayTemplate).join(', ');
     }
 
+    function emojiButton(e) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = e;
+      b.dataset.e = e;
+      b.title = e === '-' ? 'ตัวพัก (สุ่มให้มีช่องว่าง)' : e;
+      return b;
+    }
+
+    function toggleEmoji(e) {
+      state.emojis = state.emojis.includes(e) ? state.emojis.filter(x => x !== e) : state.emojis.concat(e);
+      markEdited();
+      refreshPicked();
+    }
+
+    // อัปเดตเฉพาะสถานะปุ่ม (ไม่สร้างปุ่มใหม่ทั้งหมด เพราะมีหลายร้อยปุ่ม)
+    function refreshPicked() {
+      document.querySelectorAll('.palette button').forEach(b => b.classList.toggle('on', state.emojis.includes(b.dataset.e)));
+      $('pickedCount').textContent = state.emojis.length;
+      $('pickedList').textContent = state.emojis.join(' ');
+    }
+
     function renderPalette() {
       const box = $('palette');
       box.innerHTML = '';
-      palette.forEach(e => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.textContent = e;
-        b.title = e === '-' ? 'ตัวพัก (สุ่มให้มีช่องว่าง)' : e;
-        if (state.emojis.includes(e)) b.className = 'on';
-        b.addEventListener('click', () => {
-          state.emojis = state.emojis.includes(e) ? state.emojis.filter(x => x !== e) : state.emojis.concat(e);
-          markEdited();
-          renderPalette();
+      palette.forEach(e => box.appendChild(emojiButton(e)));
+      refreshPicked();
+    }
+
+    // หมวดอีโมจี สร้างครั้งเดียว
+    function renderCategories() {
+      const wrap = $('categories');
+      EMOJI_CATEGORIES.forEach(cat => {
+        const d = document.createElement('details');
+        d.className = 'cat';
+        d.innerHTML = '<summary>' + cat.name + ' (' + cat.list.length + ')</summary>' +
+          '<div class="cat-tools"><button type="button" class="small" data-act="all">เลือกทั้งหมวด</button>' +
+          '<button type="button" class="small" data-act="none">ไม่เลือกทั้งหมวด</button></div>';
+        const pal = document.createElement('div');
+        pal.className = 'palette';
+        cat.list.forEach(e => pal.appendChild(emojiButton(e)));
+        d.appendChild(pal);
+        d.querySelector('[data-act="all"]').addEventListener('click', () => {
+          state.emojis = uniq(state.emojis.concat(cat.list));
+          markEdited(); refreshPicked();
         });
-        box.appendChild(b);
+        d.querySelector('[data-act="none"]').addEventListener('click', () => {
+          state.emojis = state.emojis.filter(e => !cat.list.includes(e));
+          markEdited(); refreshPicked();
+        });
+        wrap.appendChild(d);
       });
     }
+
+    // คลิกปุ่มอีโมจีที่ใดก็ได้ในส่วนเลือกอีโมจี
+    document.addEventListener('click', ev => {
+      const b = ev.target.closest('.palette button');
+      if (b && b.dataset.e) toggleEmoji(b.dataset.e);
+    });
+
+    // ---------- ชุดอีโมจีที่บันทึกไว้ (localStorage) ----------
+    function loadSets() {
+      try { return JSON.parse(localStorage.getItem(SET_KEY)) || []; } catch (e) { return []; }
+    }
+    function saveSets(list) {
+      try { localStorage.setItem(SET_KEY, JSON.stringify(list)); return true; } catch (e) { return false; }
+    }
+    let emojiSets = loadSets();
+
+    function setSetMsg(text, ok) {
+      $('setMsg').textContent = text;
+      $('setMsg').style.color = ok ? 'green' : '#c11';
+      if (text) setTimeout(() => { $('setMsg').textContent = ''; }, 2500);
+    }
+
+    function renderSets(selectName) {
+      const sel = $('setSelect');
+      sel.innerHTML = '';
+      if (!emojiSets.length) sel.appendChild(new Option('(ยังไม่มีชุดที่บันทึก)', ''));
+      emojiSets.forEach(s => sel.appendChild(new Option(s.name + ' (' + s.emojis.length + ')', s.name)));
+      if (selectName) sel.value = selectName;
+      $('useSetBtn').disabled = $('deleteSetBtn').disabled = !emojiSets.length;
+    }
+
+    $('saveSetBtn').addEventListener('click', () => {
+      const name = $('setNameInput').value.trim();
+      if (!name) { setSetMsg('กรุณาตั้งชื่อชุดอีโมจีก่อน'); $('setNameInput').focus(); return; }
+      if (!state.emojis.length) { setSetMsg('ยังไม่ได้เลือกอีโมจี'); return; }
+      const exists = emojiSets.some(s => s.name === name);
+      const item = { name, emojis: state.emojis.slice() };
+      emojiSets = exists ? emojiSets.map(s => (s.name === name ? item : s)) : emojiSets.concat(item);
+      if (!saveSets(emojiSets)) { setSetMsg('บันทึกไม่ได้ (เบราว์เซอร์ไม่อนุญาตให้เก็บข้อมูล)'); return; }
+      $('setNameInput').value = '';
+      renderSets(name);
+      setSetMsg(exists ? 'บันทึกทับชุด "' + name + '" แล้ว' : 'บันทึกชุด "' + name + '" แล้ว', true);
+    });
+
+    $('useSetBtn').addEventListener('click', () => {
+      const s = emojiSets.find(x => x.name === $('setSelect').value);
+      if (!s) return;
+      state.emojis = s.emojis.slice();
+      palette = uniq(palette.concat(s.emojis));
+      markEdited();
+      renderPalette();
+      setSetMsg('ใช้ชุด "' + s.name + '" แล้ว', true);
+    });
+
+    // ลบต้องกดสองครั้งเพื่อยืนยัน
+    let deleteSetArmed = false;
+    $('deleteSetBtn').addEventListener('click', () => {
+      const name = $('setSelect').value;
+      if (!name) return;
+      if (!deleteSetArmed) {
+        deleteSetArmed = true;
+        $('deleteSetBtn').textContent = 'กดอีกครั้งเพื่อยืนยัน';
+        setTimeout(() => { deleteSetArmed = false; $('deleteSetBtn').textContent = 'ลบชุดนี้'; }, 3000);
+        return;
+      }
+      deleteSetArmed = false;
+      $('deleteSetBtn').textContent = 'ลบชุดนี้';
+      emojiSets = emojiSets.filter(s => s.name !== name);
+      saveSets(emojiSets);
+      renderSets();
+      setSetMsg('ลบชุด "' + name + '" แล้ว', true);
+    });
+
+    $('clearEmoji').addEventListener('click', () => {
+      state.emojis = [];
+      markEdited();
+      refreshPicked();
+    });
 
     function renderSettings() {
       $('tplInput').value = state.templates.join(', ');
@@ -217,7 +378,7 @@
 
     // ---------- เปลี่ยนแบบ ----------
     function usePattern(p) {
-      stopSpin();
+      abortSpin();
       state = { id: p.id || null, name: p.name || '', templates: p.templates.slice(), emojis: p.emojis.slice(), rows: p.rows || 1 };
       palette = uniq(BASE_PALETTE.concat(state.emojis));
       renderAll();
@@ -316,13 +477,36 @@
       return out;
     }
 
-    function shuffleOnce() {
-      $('board').querySelectorAll('td').forEach(td => { td.textContent = makeBar(); });
+    // ---------- สุ่มแบบสลอต: ทุกช่องหมุน แล้วหยุดทีละคอลัมน์จากซ้ายไปขวา ----------
+    const SPIN_START = 700;  // ms ที่หมุนก่อนคอลัมน์แรกหยุด
+    const SPIN_STEP = 250;   // ms ระหว่างการหยุดของแต่ละคอลัมน์
+    const SPIN_TICK = 60;    // ms ความเร็วเปลี่ยนภาพขณะหมุน
+    let reels = [];          // [{ td, result, stopAt }]
+    let spinT0 = 0;
+
+    function setCell(td, text, cls) {
+      const s = document.createElement('span');
+      s.className = 'reel' + (cls ? ' ' + cls : '');
+      s.textContent = text;
+      td.replaceChildren(s);
     }
 
     function spinStep() {
-      shuffleOnce();
-      Sound.tick();
+      const elapsed = performance.now() - spinT0;
+      let landedNow = false, still = 0;
+      reels.forEach(r => {
+        if (r.done) return;
+        if (elapsed >= r.stopAt) {
+          r.done = true;
+          setCell(r.td, r.result, 'landed');
+          landedNow = true;
+        } else {
+          setCell(r.td, makeBar(), 'spin');
+          still++;
+        }
+      });
+      if (landedNow) Sound.tick();
+      if (!still) finishSpin();
     }
 
     function startSpin() {
@@ -330,16 +514,36 @@
       $('go').textContent = 'หยุด';
       if (state.rows !== $('board').rows.length) renderBoard();
       Sound.start();
-      shuffleOnce();
-      timer = setInterval(spinStep, 60);
-      stopTimer = setTimeout(stopSpin, 1000);
+      spinT0 = performance.now();
+      // ผลลัพธ์สุดท้ายสุ่มไว้ก่อน ช่องในคอลัมน์เดียวกันหยุดพร้อมกัน
+      reels = [...$('board').rows].flatMap(tr =>
+        [...tr.cells].map((td, c) => ({ td, result: makeBar(), stopAt: SPIN_START + c * SPIN_STEP, done: false })));
+      spinStep();
+      timer = setInterval(spinStep, SPIN_TICK);
     }
 
-    function stopSpin() {
-      if (timer) Sound.finish();
+    // กด "หยุด" ระหว่างหมุน: คอลัมน์ที่เหลือรีบหยุดตามกันทันที
+    function hurrySpin() {
+      const now = performance.now() - spinT0;
+      const cols = [...new Set(reels.filter(r => !r.done).map(r => r.stopAt))].sort((a, b) => a - b);
+      reels.forEach(r => { if (!r.done) r.stopAt = Math.min(r.stopAt, now + (cols.indexOf(r.stopAt) + 1) * 90); });
+    }
+
+    function finishSpin() {
       clearInterval(timer);
-      clearTimeout(stopTimer);
-      timer = stopTimer = null;
+      timer = null;
+      reels = [];
+      Sound.finish();
+      $('go').textContent = 'เริ่มสุ่ม';
+    }
+
+    function stopSpin() { hurrySpin(); }
+
+    // เปลี่ยนแบบฝึกระหว่างหมุน: ยกเลิกทันที (ไม่มีเสียงจบ)
+    function abortSpin() {
+      clearInterval(timer);
+      timer = null;
+      reels = [];
       $('go').textContent = 'เริ่มสุ่ม';
     }
 
@@ -430,6 +634,9 @@
         setTimeout(() => { $('shareBtn').textContent = 'คัดลอกลิงก์แบบฝึกนี้'; }, 2500);
       }
     });
+
+    renderCategories();
+    renderSets();
 
     // ---------- เริ่มต้น: อ่านจากลิงก์ (?p=p3 หรือ ?t=...&e=...&r=...) ----------
     (function init() {
