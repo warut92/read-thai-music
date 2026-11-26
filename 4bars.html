@@ -34,6 +34,14 @@
     .actions button { font-size: 14px; padding: 4px 10px; }
     #msg { min-height: 1.2em; font-size: 13px; color: #c11; }
     #shareBox { width: 100%; box-sizing: border-box; font-size: 12px; }
+    /* ชื่ออีโมจีภาษาไทยเมื่อชี้เมาส์ */
+    #board .em { cursor: help; }
+    /* ป้ายชื่ออยู่กลางด้านล่างของหน้าต่าง กรอบสีแดง */
+    #emojiTip { position: fixed; z-index: 1000; pointer-events: none; left: 50%; transform: translateX(-50%);
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      background: #fff; color: #222; border: 3px solid #f44336; border-radius: 8px;
+      font-family: 'K2D', sans-serif; font-size: 20px; padding: 6px 18px; white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
   </style>
 </head>
 
@@ -111,7 +119,9 @@
 
     <p><a href="./index.html">กลับหน้าแรก</a></p>
   </div>
+  <div id="emojiTip" hidden></div>
 
+  <script src="emoji-th.js"></script>
   <script>
     // ---------- ข้อมูลแบบฝึกมาตรฐาน (มาจากหน้า 4bars*-*.html เดิม) ----------
     const PRESETS = [
@@ -224,7 +234,8 @@
       b.type = 'button';
       b.textContent = e;
       b.dataset.e = e;
-      b.title = e === '-' ? 'ตัวพัก (สุ่มให้มีช่องว่าง)' : e;
+      const name = e === '-' ? 'ตัวพัก (สุ่มให้มีช่องว่าง)' : emojiNameTH(e);
+      if (name) b.dataset.name = name;
       return b;
     }
 
@@ -487,10 +498,42 @@
     function setCell(td, text, cls) {
       const s = document.createElement('span');
       s.className = 'reel' + (cls ? ' ' + cls : '');
-      s.textContent = text;
+      if (cls === 'landed') {
+        // ผลลัพธ์สุดท้าย: แยกอีโมจีแต่ละตัวเพื่อแสดงชื่อภาษาไทยเมื่อชี้เมาส์
+        graphemes(text).forEach(g => {
+          const name = g !== '-' && emojiNameTH(g);
+          if (!name) { s.append(g); return; }
+          const em = document.createElement('span');
+          em.className = 'em';
+          em.textContent = g;
+          em.dataset.name = name;
+          s.appendChild(em);
+        });
+      } else {
+        s.textContent = text;
+      }
       td.replaceChildren(s);
     }
 
+    // ---------- ป้ายชื่ออีโมจี (ชี้เมาส์ หรือแตะบนมือถือ) ----------
+    const tip = $('emojiTip');
+    let tipHideTimer = null;
+    function showTip(el) {
+      clearTimeout(tipHideTimer);
+      tip.textContent = el.textContent === '-' ? el.dataset.name : el.textContent + ' ' + el.dataset.name;
+      tip.hidden = false;
+    }
+    function hideTip() { tip.hidden = true; }
+    document.addEventListener('mouseover', ev => {
+      const el = ev.target.closest('[data-name]');
+      el ? showTip(el) : hideTip();
+    });
+    document.addEventListener('touchstart', ev => {
+      const el = ev.target.closest('#board [data-name]');
+      if (!el) return hideTip();
+      showTip(el);
+      tipHideTimer = setTimeout(hideTip, 1500);
+    }, { passive: true });
     function spinStep() {
       const elapsed = performance.now() - spinT0;
       let landedNow = false, still = 0;
